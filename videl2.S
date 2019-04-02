@@ -39,12 +39,18 @@
 #define LOGO_MOT_HEIGHT  56 // lines
 
 _picture_boot:
+	movem.l	d2-d7/a2-a6,-(sp)
+	cpusha	bc
+	cinva	bc
+
 	move.l #0x8000,D0                         // instruction cache
 	movec.l D0,CACR
 
 	move.w #0x2300,SR                         // enable interrupts
 	bsr screen_ntc_boot
 	moveq #0,D0	// should be moveq #1,d0 ?
+
+	movem.l	(sp)+,d2-d7/a2-a6
 	rts
 
 picture_build:                                         // target A0

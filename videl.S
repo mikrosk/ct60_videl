@@ -2,7 +2,9 @@
 		.globl	_restore_videl
 
 		.text
-_save_videl:	bsr.w	wait_vbl			// avoid flicking
+_save_videl:	movem.l	d2-d7/a2-a6,-(sp)
+
+		bsr.w	wait_vbl			// avoid flicking
 
 		lea	0xffff9800.w,a0			// save falcon palette
 		lea	save_pal,a1			//
@@ -40,9 +42,13 @@ save_loop:						//
 
 		move.w	0xffff8266.w,(a0)+		// f_s
 		move.w	0xffff8260.w,(a0)+		// st_s
+
+		movem.l	(sp)+,d2-d7/a2-a6
 		rts
 
-_restore_videl:	bsr.w	wait_vbl			// avoid flicking
+_restore_videl:	movem.l	d2-d7/a2-a6,-(sp)
+
+		bsr.w	wait_vbl			// avoid flicking
 
 		lea	save_video,a0
 
@@ -97,6 +103,8 @@ restore_loop:						//
 
 		movem.l	(a0),d0-d7			// restore st palette
 		movem.l	d0-d7,0xffff8240.w		//
+
+		movem.l	(sp)+,d2-d7/a2-a6
 		rts
 
 wait_vbl:	move.l	a0,-(sp)

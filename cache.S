@@ -13,7 +13,7 @@ _flush_cache:	cpusha	bc
 		rts
 
 _restore_cache:	cpusha	bc
-		cinv	bc
+		cinva	bc
 
 		move.l	old_cacr,d0
 		movec	d0,cacr
