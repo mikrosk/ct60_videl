@@ -24,6 +24,10 @@
 
 #include "vars.h"
 
+#define DISABLE_EXT_CLOCK    0
+#define ENABLE_VSYNC         0
+#define DISABLE_TIMERC_CHECK 0
+
 #define measure_frame 0x3EC
 #define measure_line  0x3F0
 #define measure_clock 0x3F4
@@ -279,7 +283,7 @@ test_tests:
 screen_ntc_boot:                     // 320 * 240 * 65K colors */
 
 	movem.l D0-A6,-(SP)
-	lea empty,A0
+	lea empty,A0		// 0x10000
 	moveq #0,D7
 	move.b 0xFFFF8006,D7
 	lsr.w #6,D7             // 0:ST nomo, 1:ST col, 2:VGA, 3:TV
@@ -342,7 +346,7 @@ screen_ntc_boot:                     // 320 * 240 * 65K colors */
 	clr.l 0xFFFF9800        // black border
 	move.w (SP)+,SR
 	bsr set_external_clock
-	lea 0x40000,A0          // screen buffer
+	lea empty2,A0           // screen buffer (0x40000)
 	cmp.l #0x44454D4F,0x00ED0000 // DEMO code
 	beq.s .docall
 	cmp.l #0x58494D47,0x00ED0000 // XIMG picture code
@@ -435,7 +439,12 @@ set_external_clock:
 	move.w D0,D1            // internal clock
 	clr.l (A1)
 	bset #0,0xA(A0)         // external clock
+#if DISABLE_EXT_CLOCK
+	nop
+	nop
+#else
 	bsr measure_clock_videl
+#endif
 	move.l 4(A1),12(A1)     // copy size
 	move.l #0x5F465245,(A1)+// _FRE
 	move.l D0,(A1)+
@@ -459,6 +468,14 @@ measure_clock_videl:                 // return value in MHz
 	clr.l measure_frame     // nS
 	clr.l measure_line      // nS * 100
 	clr.l measure_clock     // nS * 100
+
+#if ENABLE_VSYNC
+	move.w  #0x25,-(sp)                     // Vsync()
+        trap    #14                             //
+        addq.l  #2,sp                           //
+        movea.l (sp)+,a0
+#endif
+
 	clr.w vbl_count
 	move.w SR,-(SP)
 	or.w #0x700,SR          // no IRQ
@@ -475,11 +492,23 @@ measure_clock_videl:                 // return value in MHz
 	moveq #0,D1
 	move.l _hz_200,D2
 .wait_measure:
+#if DISABLE_TIMERC_CHECK
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+#else
 		bsr test_tests
 		move.l _hz_200,D0
 		sub.l D2,D0
 		cmp.l #100,D0           // time-out
 		bge.s .timeout_measure
+#endif
 	move.l measure_clock,D1
 	beq.s .wait_measure
 .timeout_measure:
@@ -701,3 +730,4 @@ pic_logo_ct60:
 
 	.bss
 empty:	.ds.l	38400
+empty2:	.ds.w	320*240
