@@ -24,9 +24,9 @@
 
 #include "vars.h"
 
-#define DISABLE_EXT_CLOCK    0
-#define ENABLE_VSYNC         0
-#define DISABLE_TIMERC_CHECK 0
+#define DISABLE_EXT_CLOCK    1
+#define ENABLE_VSYNC         1
+#define DISABLE_TIMERC_CHECK 1
 
 #define measure_frame 0x3EC
 #define measure_line  0x3F0
@@ -473,7 +473,6 @@ measure_clock_videl:                 // return value in MHz
 	move.w  #0x25,-(sp)                     // Vsync()
         trap    #14                             //
         addq.l  #2,sp                           //
-        movea.l (sp)+,a0
 #endif
 
 	clr.w vbl_count
